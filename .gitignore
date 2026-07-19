@@ -3,7 +3,6 @@
 *.db-journal
 __pycache__/
 .venv/
-venv/
 
 auth/credentials.json
-auth/token.json 
+auth/token.json
