@@ -10,17 +10,14 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 
-def main():
-  """Shows basic usage of the Gmail API.
-  Lists the user's Gmail labels.
-  """
+def get_gmail_credentials():
+
   creds = None
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
+  # If there is a valid token
   if os.path.exists("auth/token.json"):
     creds = Credentials.from_authorized_user_file("auth/token.json", SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
+  
+  # No token/Invalid Token, so we need to get a new one 
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
@@ -29,12 +26,15 @@ def main():
           "auth/credentials.json", SCOPES
       )
       creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
     with open("auth/token.json", "w") as token:
       token.write(creds.to_json())
 
+
+  return creds
+
+def demo_block():
+  creds = get_gmail_credentials()
   try:
-    # Call the Gmail API
     service = build("gmail", "v1", credentials=creds)
     results = service.users().labels().list(userId="me").execute()
     labels = results.get("labels", [])
@@ -45,11 +45,8 @@ def main():
     print("Labels:")
     for label in labels:
       print(label["name"])
-
   except HttpError as error:
-    # TODO(developer) - Handle errors from gmail API.
     print(f"An error occurred: {error}")
 
-
 if __name__ == "__main__":
-  main()
+  demo_block()
