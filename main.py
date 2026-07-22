@@ -1,64 +1,52 @@
+from auth.gmail_auth import get_gmail_credentials
 from googleapiclient.discovery import build
 
-from auth.gmail_auth import get_gmail_credentials
 from fetcher import get_new_emails
-
+from classifier import llm_call
 
 
 def main():
 
+    # 1. Get Gmail credentials
     creds = get_gmail_credentials()
 
-
+    # 2. Create Gmail API service
     service = build(
         "gmail",
         "v1",
         credentials=creds
     )
 
-
+    # 3. Fetch emails
     emails = get_new_emails(
         service,
-        max_results=5
+        max_results=10
     )
 
-
-    print(
-        f"\nReceived {len(emails)} emails\n"
-    )
+    print(f"Fetched {len(emails)} emails\n")
 
 
-    for index, email in enumerate(emails, start=1):
+    # Debug: посмотреть что пришло
+    for email in emails:
+        print("SUBJECT:", email.subject)
+        print("FROM:", email.sender)
+        print("BODY LENGTH:", len(email.body_text))
+        print("-" * 40)
 
-        print("=" * 60)
-        print(f"EMAIL #{index}")
-        print("=" * 60)
 
-        print(
-            f"From: {email.sender}"
-        )
+    # 4. Classify with DeepSeek
+    classified = llm_call(emails)
 
-        print(
-            f"Subject: {email.subject}"
-        )
 
-        print(
-            f"Date: {email.received_at}"
-        )
+    # 5. Print results
+    print("\nCLASSIFICATION RESULTS\n")
 
-        print("\nBody:")
-
-        if email.body_text:
-            print(
-                email.body_text[:500]
-            )
-        else:
-            print(
-                "[EMPTY BODY]"
-            )
-
-        print()
-
+    for item in classified:
+        print("=" * 50)
+        print("Subject:", item.email.subject)
+        print("Sender:", item.email.sender)
+        print("Category:", item.category.value)
+        print("Summary:", item.summary)
 
 
 if __name__ == "__main__":
